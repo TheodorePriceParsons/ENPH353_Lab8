@@ -141,7 +141,15 @@ class LineFollowerEnv(GazeboEnv):
         vel_cmd = RosTwist()
 
         # TODO: Impelement process action.
-        
+        if action == 0:        # left
+            vel_cmd.linear.x = 0.2
+            vel_cmd.angular.z = 1.0
+        elif action == 1:      # forward
+            vel_cmd.linear.x = 0.4
+            vel_cmd.angular.z = 0.0
+        else:                  # right
+            vel_cmd.linear.x = 0.2
+            vel_cmd.angular.z = -1.0
         return vel_cmd
 
 
@@ -154,7 +162,12 @@ class LineFollowerEnv(GazeboEnv):
         reward = 0
 
         # TODO: Implement process reward.
-        
+        if terminated:
+            reward = -200
+        elif action == 1:
+            reward = 5
+        else:
+            reward = 4
         return reward
 
 
@@ -175,7 +188,18 @@ class LineFollowerEnv(GazeboEnv):
         terminated = False
 
         # TODO: Implement process observation
+        h, w, _ = cv_image.shape
+        roi = cv_image[int(0.75 * h):, :]
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        _, mask = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
 
+        M = cv2.moments(mask)
+        if M["m00"] < 500:
+            state = -1
+            terminated = True
+        else:
+            cx = M["m10"] / M["m00"]
+            state = min(int(cx / (w / 3)), 2)
         return state, terminated
 
 

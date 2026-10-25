@@ -48,10 +48,10 @@ def main():
 
             if total_reward > highest_reward:
                 highest_reward = total_reward
-                print("New highest reward: {total_reward}.")
+                print(f"New highest reward: {total_reward}.")
 
-            env.reset()
-            epsilon = max(0.01, epsilon * epsilon_decay)  # Decay epsilon
+            state, _ = env.reset()
+            epsilon = max(0.01, epsilon * epsilon_decay)
 
     except KeyboardInterrupt:
         print("Training interrupted by user!")
@@ -66,7 +66,13 @@ def learn(state, action, next_state, reward, q_table):
     alpha = 0.1
     gamma = 0.9
 
-    # TODO: Implement update Q values using the Bellman update equation
+    if next_state == -1:
+        target = reward
+    else:
+        target = reward + gamma * np.max(q_table[next_state])
+
+    
+    q_table[state, action] += alpha * (target - q_table[state, action])
 
     return q_table
 
@@ -74,9 +80,13 @@ def learn(state, action, next_state, reward, q_table):
 def choose_action(state, q_table, epsilon, action_space):
     action = 0
 
-    # TODO: Implement choose action.
+    if random.random()<epsilon:
+        return action_space.sample()
+    q_row = q_table[state]
+    best_actions = np.flatnonzero(q_row == q_row.max())
+    return int(np.random.choice(best_actions))
     
-    return action
+
 
 
 def saveQ(q_table, save_path):
