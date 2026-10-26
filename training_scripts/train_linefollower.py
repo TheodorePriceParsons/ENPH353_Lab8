@@ -3,6 +3,8 @@ import random
 import gym_gazebo
 import gymnasium as gym
 import numpy as np
+import pickle
+import os
 from torch.utils.tensorboard.writer import SummaryWriter
 
 def main():
@@ -12,10 +14,15 @@ def main():
     observation_space = env.observation_space
     action_space = env.action_space
 
-    epsilon = 0.8
+    epsilon = 0.2
     epsilon_decay = 0.99
 
-    q_table = np.zeros((observation_space.n, action_space.n))
+    
+    if os.path.exists("best_q_table.pickle"):
+        q_table = loadQ("best_q_table.pickle")
+        print("Resumed from saved Q table:\n", q_table)
+    else:
+        q_table = np.zeros((observation_space.n, action_space.n))
 
     highest_reward = 0
 
@@ -49,6 +56,7 @@ def main():
             if total_reward > highest_reward:
                 highest_reward = total_reward
                 print(f"New highest reward: {total_reward}.")
+                saveQ(q_table, "best_q_table.pickle")
 
             state, _ = env.reset()
             epsilon = max(0.01, epsilon * epsilon_decay)
@@ -92,14 +100,16 @@ def choose_action(state, q_table, epsilon, action_space):
 def saveQ(q_table, save_path):
 
     # TODO: Implement saving the Q values
-
-    return
+    with open(save_path, "wb") as f:
+        pickle.dump(q_table, f)
+    print(f"Saved Q table to {save_path}")
 
 def loadQ(load_path):
 
     # TODO: Implement loading the Q values
+    with open(load_path, "rb") as f:
+        return pickle.load(f)
 
-    return
 
 if __name__ == "__main__":
     main()

@@ -10,6 +10,7 @@ from rclpy.node import Node as RosNode
 from sensor_msgs.msg import Image as RosImage
 from geometry_msgs.msg import Twist as RosTwist
 
+
 NUM_OBS_STATES = 3
 NUM_ACTIONS = 3
 
@@ -190,8 +191,8 @@ class LineFollowerEnv(GazeboEnv):
         # TODO: Implement process observation
         h, w, _ = cv_image.shape
         roi = cv_image[int(0.75 * h):, :]
-        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-        _, mask = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
+        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, (90, 80, 40), (130, 255, 255))
 
         M = cv2.moments(mask)
         if M["m00"] < 500:
@@ -200,6 +201,9 @@ class LineFollowerEnv(GazeboEnv):
         else:
             cx = M["m10"] / M["m00"]
             state = min(int(cx / (w / 3)), 2)
+        cv2.imshow("mask", mask)
+        cv2.waitKey(1)
+        print("state:", state, "line pixels:", M["m00"] / 255)
         return state, terminated
 
 
